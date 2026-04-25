@@ -3,244 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Consulta de Puntos - Alumnos</title>
+    <title>🎓 Sistema de Puntos - Padres</title>
     <style>
         * {
+            margin: 0;
+            padding: 0;
             box-sizing: border-box;
         }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: #f0f2f5;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
             min-height: 100vh;
-        }
-        .container {
-            max-width: 800px;
-            width: 100%;
-            background: white;
-            border-radius: 30px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            overflow: hidden;
-            padding: 20px 30px 40px;
-            transition: 0.3s;
-        }
-        h1 {
-            text-align: center;
-            color: #1e3c72;
-            font-size: 2rem;
-            margin-top: 0;
-        }
-        .sub {
-            text-align: center;
-            color: #2c3e66;
-            margin-bottom: 30px;
-            font-size: 1rem;
-        }
-        .input-group {
             display: flex;
             flex-direction: column;
-            gap: 10px;
-            margin-bottom: 25px;
         }
-        label {
-            font-weight: bold;
-            font-size: 1.1rem;
-            color: #1e3c72;
-        }
-        input {
-            padding: 15px;
-            font-size: 1.2rem;
-            border: 2px solid #ccc;
-            border-radius: 50px;
-            outline: none;
-            text-align: center;
-            letter-spacing: 1px;
-        }
-        input:focus {
-            border-color: #1e3c72;
-        }
-        button {
+        header {
             background: #1e3c72;
             color: white;
-            border: none;
-            padding: 14px;
-            font-size: 1.2rem;
-            border-radius: 50px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: 0.2s;
-        }
-        button:hover {
-            background: #0e2a4f;
-        }
-        .resultado {
-            margin-top: 30px;
-            background: #f8f9fc;
-            border-radius: 20px;
             padding: 20px;
-            border-left: 6px solid #1e3c72;
-        }
-        .puntos-grandes {
-            font-size: 3rem;
-            font-weight: bold;
-            color: #0066cc;
             text-align: center;
-            margin: 10px 0;
-            background: #e6f0ff;
-            border-radius: 40px;
-            padding: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
-        .premio-item {
+        header h1 {
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+        }
+        header p {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+        .contenedor-iframe {
+            flex: 1;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        iframe {
+            width: 100%;
+            height: 85vh;
+            border: none;
+            border-radius: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
             background: white;
-            margin: 8px 0;
-            padding: 8px 12px;
-            border-radius: 30px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        }
-        hr {
-            margin: 20px 0;
-        }
-        .error {
-            color: #c0392b;
-            background: #fce4e4;
-            padding: 12px;
-            border-radius: 30px;
-            text-align: center;
         }
         footer {
             text-align: center;
-            margin-top: 30px;
+            padding: 15px;
+            background: #e9ecef;
             font-size: 0.8rem;
-            color: #7f8c8d;
+            color: #495057;
         }
         @media (max-width: 600px) {
-            .container { padding: 20px; }
-            .puntos-grandes { font-size: 2.2rem; }
+            iframe { height: 90vh; }
+            header h1 { font-size: 1.4rem; }
         }
     </style>
 </head>
 <body>
-<div class="container">
-    <h1>🎓 Sistema de Puntos</h1>
-    <div class="sub">Consulta tus puntos y premios en tiempo real</div>
-
-    <div class="input-group">
-        <label>📌 RUT del alumno (solo números, sin puntos ni guión)</label>
-        <input type="text" id="rutInput" placeholder="Ejemplo: 12345678" autocomplete="off">
-        <button id="consultarBtn">🔍 CONSULTAR</button>
+    <header>
+        <h1>🎓 Sistema de Puntos</h1>
+        <p>Consulta tus puntos y premios en tiempo real</p>
+    </header>
+    <div class="contenedor-iframe">
+        <!-- 
+            ⚠️ IMPORTANTE: Reemplaza la URL de abajo con la URL de tu aplicación web de Apps Script
+            (la que termina en /exec y que contiene el formulario HTML que ya te funciona).
+            Ejemplo: https://script.google.com/macros/s/AKfycb.../exec
+        -->
+        <iframe src="https://script.google.com/macros/s/AKfycbxvwMKF_VAVxk6D-sECvymKFQQszHj5g5zFMR47EFcQ6m4Tc4wVHLc70NlAdzHr5hFQfA/exec" title="Consulta de Puntos"></iframe>
     </div>
-
-    <div id="resultadoArea" class="resultado" style="display: none;">
-        <!-- Aquí se mostrarán los datos -->
-    </div>
-    <footer>Los datos se actualizan instantáneamente desde nuestra base de datos oficial.</footer>
-</div>
-
-<script>
-    // === CONFIGURACIÓN: PON AQUÍ LA URL DE TU APPS SCRIPT ===
-    const API_URL = "https://script.google.com/macros/s/AKfycbww47JznU4NG6a0kL6UZn6DQTo8eFfNCv2Kbycs-ffY2QjTL9MtRv0USD0XsiQOKPJ0xw/exec";   // <--- REEMPLAZA CON TU URL CORRECTA
-
-    const rutInput = document.getElementById('rutInput');
-    const consultarBtn = document.getElementById('consultarBtn');
-    const resultadoArea = document.getElementById('resultadoArea');
-
-    consultarBtn.addEventListener('click', consultar);
-    rutInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') consultar();
-    });
-
-    function consultar() {
-        let rut = rutInput.value.trim();
-        if (rut === "") {
-            mostrarError("Por favor, ingresa el RUT del alumno.");
-            return;
-        }
-        // Limpiar caracteres no numéricos (por si el usuario copia con puntos)
-        rut = rut.replace(/\D/g, '');
-        if (rut.length < 6) {
-            mostrarError("El RUT debe tener al menos 6 dígitos.");
-            return;
-        }
-
-        // Mostrar estado de carga
-        resultadoArea.style.display = "block";
-        resultadoArea.innerHTML = `<div style="text-align:center;">⏳ Consultando datos del alumno...</div>`;
-
-        // Llamar a la API de Apps Script mediante POST
-        const payload = {
-            comando: "consultar",
-            rut: rut
-        };
-
-        fetch(API_URL, {
-            method: 'POST',
-            mode: 'cors',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(payload)
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === "ok") {
-                mostrarExito(data);
-            } else {
-                mostrarError(data.message || "RUT no encontrado o error en el servidor.");
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            mostrarError("No se pudo conectar con el servidor. Intenta más tarde.");
-        });
-    }
-
-    function mostrarExito(data) {
-        const puntos = data.puntos;
-        const nombre = data.nombre;
-        const curso = data.curso;
-        const disponibles = data.premios_disponibles || [];
-        const proximo = data.proximo_premio;
-        const faltantes = data.puntos_faltantes;
-        const todos = data.todos_los_premios || [];
-
-        let html = `
-            <h3 style="margin-top:0;">👤 ${nombre}</h3>
-            <p><strong>📚 Curso:</strong> ${curso}</p>
-            <div class="puntos-grandes">🏆 ${puntos} PUNTOS</div>
-            <hr>
-            <h4>🎁 Premios que puedes canjear ahora:</h4>
-        `;
-        if (disponibles.length > 0) {
-            disponibles.forEach(p => {
-                html += `<div class="premio-item">✓ ${p}</div>`;
-            });
-        } else {
-            html += `<div class="premio-item">(ninguno por ahora)</div>`;
-        }
-        if (proximo) {
-            html += `<h4>🎯 Próximo premio:</h4>
-                     <div class="premio-item"><strong>${proximo}</strong> (faltan ${faltantes} puntos)</div>
-                     <p>⏳ Sigue acumulando puntos</p>`;
-        } else {
-            html += `<p style="color:green;">🎉 ¡FELICITACIONES! Ya puedes canjear todos los premios</p>`;
-        }
-
-        if (todos.length > 0) {
-            html += `<hr><h4>🏅 Todos los premios a los que puedes aspirar:</h4>`;
-            todos.forEach(prem => {
-                html += `<div class="premio-item">• ${prem.nombre} → ${prem.costo} pts</div>`;
-            });
-        }
-        resultadoArea.innerHTML = html;
-    }
-
-    function mostrarError(mensaje) {
-        resultadoArea.innerHTML = `<div class="error">❌ ${mensaje}</div>`;
-    }
-</script>
+    <footer>
+        Los datos se actualizan al instante desde la base oficial del colegio.
+    </footer>
 </body>
 </html>
