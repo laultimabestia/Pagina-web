@@ -2,100 +2,245 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Escuela - Educación de Calidad</title>
-    <link rel="stylesheet" href="styles.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Consulta de Puntos - Alumnos</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: white;
+            border-radius: 30px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            overflow: hidden;
+            padding: 20px 30px 40px;
+            transition: 0.3s;
+        }
+        h1 {
+            text-align: center;
+            color: #1e3c72;
+            font-size: 2rem;
+            margin-top: 0;
+        }
+        .sub {
+            text-align: center;
+            color: #2c3e66;
+            margin-bottom: 30px;
+            font-size: 1rem;
+        }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+        label {
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: #1e3c72;
+        }
+        input {
+            padding: 15px;
+            font-size: 1.2rem;
+            border: 2px solid #ccc;
+            border-radius: 50px;
+            outline: none;
+            text-align: center;
+            letter-spacing: 1px;
+        }
+        input:focus {
+            border-color: #1e3c72;
+        }
+        button {
+            background: #1e3c72;
+            color: white;
+            border: none;
+            padding: 14px;
+            font-size: 1.2rem;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+        button:hover {
+            background: #0e2a4f;
+        }
+        .resultado {
+            margin-top: 30px;
+            background: #f8f9fc;
+            border-radius: 20px;
+            padding: 20px;
+            border-left: 6px solid #1e3c72;
+        }
+        .puntos-grandes {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #0066cc;
+            text-align: center;
+            margin: 10px 0;
+            background: #e6f0ff;
+            border-radius: 40px;
+            padding: 10px;
+        }
+        .premio-item {
+            background: white;
+            margin: 8px 0;
+            padding: 8px 12px;
+            border-radius: 30px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        hr {
+            margin: 20px 0;
+        }
+        .error {
+            color: #c0392b;
+            background: #fce4e4;
+            padding: 12px;
+            border-radius: 30px;
+            text-align: center;
+        }
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 0.8rem;
+            color: #7f8c8d;
+        }
+        @media (max-width: 600px) {
+            .container { padding: 20px; }
+            .puntos-grandes { font-size: 2.2rem; }
+        }
+    </style>
 </head>
 <body>
-    <!-- ENCABEZADO -->
-    <header>
-        <div class="container">
-            <div class="logo">
-                <h1>🎓 Mi Escuela</h1>
-            </div>
-            <nav>
-                <ul>
-                    <li><a href="#inicio">Inicio</a></li>
-                    <li><a href="#sobre">Sobre Nosotros</a></li>
-                    <li><a href="#programas">Programas</a></li>
-                    <li><a href="#contacto">Contacto</a></li>
-                </ul>
-            </nav>
-        </div>
-    </header>
+<div class="container">
+    <h1>🎓 Sistema de Puntos</h1>
+    <div class="sub">Consulta tus puntos y premios en tiempo real</div>
 
-    <!-- SECCIÓN PRINCIPAL -->
-    <section id="inicio" class="hero">
-        <div class="hero-content">
-            <h1>Bienvenido a Mi Escuela</h1>
-            <p>Formando líderes del futuro con educación de calidad</p>
-            <button class="btn">Conoce Más</button>
-        </div>
-    </section>
+    <div class="input-group">
+        <label>📌 RUT del alumno (solo números, sin puntos ni guión)</label>
+        <input type="text" id="rutInput" placeholder="Ejemplo: 12345678" autocomplete="off">
+        <button id="consultarBtn">🔍 CONSULTAR</button>
+    </div>
 
-    <!-- SOBRE NOSOTROS -->
-    <section id="sobre" class="about">
-        <div class="container">
-            <h2>Sobre Nosotros</h2>
-            <p>Somos una institución educativa comprometida con la excelencia académica y la formación integral de nuestros estudiantes.</p>
-            <div class="features">
-                <div class="feature">
-                    <h3>📚 Educación de Calidad</h3>
-                    <p>Programas académicos rigurosos y actualizados</p>
-                </div>
-                <div class="feature">
-                    <h3>👨‍🏫 Docentes Calificados</h3>
-                    <p>Profesionales con experiencia y dedicación</p>
-                </div>
-                <div class="feature">
-                    <h3>🏆 Infraestructura Moderna</h3>
-                    <p>Instalaciones completas y tecnología avanzada</p>
-                </div>
-            </div>
-        </div>
-    </section>
+    <div id="resultadoArea" class="resultado" style="display: none;">
+        <!-- Aquí se mostrarán los datos -->
+    </div>
+    <footer>Los datos se actualizan instantáneamente desde nuestra base de datos oficial.</footer>
+</div>
 
-    <!-- PROGRAMAS -->
-    <section id="programas" class="programs">
-        <div class="container">
-            <h2>Nuestros Programas</h2>
-            <div class="programs-grid">
-                <div class="program-card">
-                    <h3>Primaria</h3>
-                    <p>Grados 1-6</p>
-                </div>
-                <div class="program-card">
-                    <h3>Secundaria</h3>
-                    <p>Grados 7-9</p>
-                </div>
-                <div class="program-card">
-                    <h3>Bachillerato</h3>
-                    <p>Grados 10-12</p>
-                </div>
-            </div>
-        </div>
-    </section>
+<script>
+    // === CONFIGURACIÓN: PON AQUÍ LA URL DE TU APPS SCRIPT ===
+    const API_URL = "https://script.google.com/macros/s/AKfycbxvwMKF_VAVxk6D-sECvymKFQQszHj5g5zFMR47EFcQ6m4Tc4wVHLc70NlAdzHr5hFQfA/exec";   // <--- REEMPLAZA CON TU URL CORRECTA
 
-    <!-- CONTACTO -->
-    <section id="contacto" class="contact">
-        <div class="container">
-            <h2>Contacto</h2>
-            <p>📞 Teléfono: +34 123 456 789</p>
-            <p>📧 Email: info@mescuela.com</p>
-            <p>📍 Dirección: Calle Principal 123, Tu Ciudad</p>
-        </div>
-    </section>
+    const rutInput = document.getElementById('rutInput');
+    const consultarBtn = document.getElementById('consultarBtn');
+    const resultadoArea = document.getElementById('resultadoArea');
 
-    <!-- PIE DE PÁGINA -->
-    <footer>
-        <div class="container">
-            <p>&copy; 2026 Mi Escuela. Todos los derechos reservados.</p>
-            <div class="social">
-                <a href="#">Facebook</a>
-                <a href="#">Instagram</a>
-                <a href="#">Twitter</a>
-            </div>
-        </div>
-    </footer>
+    consultarBtn.addEventListener('click', consultar);
+    rutInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') consultar();
+    });
+
+    function consultar() {
+        let rut = rutInput.value.trim();
+        if (rut === "") {
+            mostrarError("Por favor, ingresa el RUT del alumno.");
+            return;
+        }
+        // Limpiar caracteres no numéricos (por si el usuario copia con puntos)
+        rut = rut.replace(/\D/g, '');
+        if (rut.length < 6) {
+            mostrarError("El RUT debe tener al menos 6 dígitos.");
+            return;
+        }
+
+        // Mostrar estado de carga
+        resultadoArea.style.display = "block";
+        resultadoArea.innerHTML = `<div style="text-align:center;">⏳ Consultando datos del alumno...</div>`;
+
+        // Llamar a la API de Apps Script mediante POST
+        const payload = {
+            comando: "consultar",
+            rut: rut
+        };
+
+        fetch(API_URL, {
+            method: 'POST',
+            mode: 'cors',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === "ok") {
+                mostrarExito(data);
+            } else {
+                mostrarError(data.message || "RUT no encontrado o error en el servidor.");
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            mostrarError("No se pudo conectar con el servidor. Intenta más tarde.");
+        });
+    }
+
+    function mostrarExito(data) {
+        const puntos = data.puntos;
+        const nombre = data.nombre;
+        const curso = data.curso;
+        const disponibles = data.premios_disponibles || [];
+        const proximo = data.proximo_premio;
+        const faltantes = data.puntos_faltantes;
+        const todos = data.todos_los_premios || [];
+
+        let html = `
+            <h3 style="margin-top:0;">👤 ${nombre}</h3>
+            <p><strong>📚 Curso:</strong> ${curso}</p>
+            <div class="puntos-grandes">🏆 ${puntos} PUNTOS</div>
+            <hr>
+            <h4>🎁 Premios que puedes canjear ahora:</h4>
+        `;
+        if (disponibles.length > 0) {
+            disponibles.forEach(p => {
+                html += `<div class="premio-item">✓ ${p}</div>`;
+            });
+        } else {
+            html += `<div class="premio-item">(ninguno por ahora)</div>`;
+        }
+        if (proximo) {
+            html += `<h4>🎯 Próximo premio:</h4>
+                     <div class="premio-item"><strong>${proximo}</strong> (faltan ${faltantes} puntos)</div>
+                     <p>⏳ Sigue acumulando puntos</p>`;
+        } else {
+            html += `<p style="color:green;">🎉 ¡FELICITACIONES! Ya puedes canjear todos los premios</p>`;
+        }
+
+        if (todos.length > 0) {
+            html += `<hr><h4>🏅 Todos los premios a los que puedes aspirar:</h4>`;
+            todos.forEach(prem => {
+                html += `<div class="premio-item">• ${prem.nombre} → ${prem.costo} pts</div>`;
+            });
+        }
+        resultadoArea.innerHTML = html;
+    }
+
+    function mostrarError(mensaje) {
+        resultadoArea.innerHTML = `<div class="error">❌ ${mensaje}</div>`;
+    }
+</script>
 </body>
 </html>
