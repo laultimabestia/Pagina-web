@@ -1,71 +1,561 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Consulta de Puntos</title>
-    <style>
-        body { font-family: Arial, sans-serif; background: #f0f2f5; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .container { max-width: 800px; width: 100%; background: white; border-radius: 30px; padding: 20px 30px 40px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-        h1 { text-align: center; color: #1e3c72; }
-        input, button { width: 100%; padding: 15px; margin: 10px 0; border-radius: 50px; border: 2px solid #ccc; font-size: 1.2rem; box-sizing: border-box; }
-        button { background: #1e3c72; color: white; font-weight: bold; cursor: pointer; border: none; }
-        .puntos { font-size: 3rem; font-weight: bold; color: #0066cc; text-align: center; background: #e6f0ff; border-radius: 40px; padding: 10px; margin: 15px 0; }
-        .error { color: #c0392b; background: #fce4e4; padding: 12px; border-radius: 30px; text-align: center; }
-        .premio { background: #f8f9fc; margin: 5px 0; padding: 8px; border-radius: 20px; }
-        hr { margin: 20px 0; }
-    </style>
-</head>
-<body>
-<div class="container">
-    <h1>🎓 Consulta de Puntos</h1>
-    <input type="text" id="rut" placeholder="Run (solo números)" autocomplete="off">
-    <button id="btnConsultar">Consultar</button>
-    <div id="resultado"></div>
-    <p style="font-size:0.8rem; text-align:center;">Datos actualizados al instante</p>
-</div>
-<script>
-    // URL de tu Apps Script (la que funciona con Python)
-    const API_URL = "https://script.google.com/macros/s/AKfycbx2Ay6Ou93Sy0voVzkTDRPwY6lnz3SCXzHtJB3qqsW_xjHVoK8cgbYo4eXnL5yxwCR5rw/exec";
+// ==================================================
+// CONFIGURACIÓN - AJUSTA LOS NOMBRES DE TUS HOJAS
+// ==================================================
+const HOJA_DATOS = "DATOS";
+const HOJA_PREMIOS = "PREMIOS";
+const HOJA_CANJES = "CANJES";
 
-    document.getElementById("btnConsultar").onclick = async () => {
-        let rut = document.getElementById("rut").value.trim().replace(/\D/g, "");
-        if (!rut) { alert("Ingresa un número de Run válido"); return; }
-        const div = document.getElementById("resultado");
-        div.innerHTML = "<div>⏳ Consultando...</div>";
-        try {
-            const response = await fetch(API_URL, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ comando: "consultar", rut: rut })
-            });
-            const data = await response.json();
-            if (data.status !== "ok") {
-                div.innerHTML = "<div class='error'>❌ " + (data.message || "Error inesperado") + "</div>";
-                return;
-            }
-            let html = `<div><strong>👤 ${data.nombre}</strong><br>📚 ${data.curso}</div>`;
-            html += `<div class="puntos">🏆 ${data.puntos} PUNTOS</div>`;
-            html += "<h3>🎁 Premios que puedes canjear ahora:</h3>";
-            if (data.premios_disponibles && data.premios_disponibles.length) {
-                data.premios_disponibles.forEach(p => html += `<div class="premio">✓ ${p}</div>`);
-            } else {
-                html += "<div class='premio'>✗ Ninguno por ahora</div>";
-            }
-            if (data.proximo_premio) {
-                html += `<h4>🎯 Próximo premio:</h4><div class="premio"><strong>${data.proximo_premio}</strong> (faltan ${data.puntos_faltantes} pts)</div><p>⏳ Sigue acumulando puntos</p>`;
-            } else {
-                html += "<p style='color:green;'>🎉 ¡FELICITACIONES! Ya puedes canjear todos los premios</p>";
-            }
-            if (data.todos_los_premios && data.todos_los_premios.length) {
-                html += "<hr><h4>🏅 Todos los premios a los que puedes aspirar:</h4>";
-                data.todos_los_premios.forEach(prem => html += `<div class="premio">• ${prem.nombre} → ${prem.costo} pts</div>`);
-            }
-            div.innerHTML = html;
-        } catch (err) {
-            div.innerHTML = `<div class='error'>❌ Error de conexión: ${err.message}</div>`;
+// ==================================================
+// PÁGINA WEB RESPONSIVE (GET) - DISEÑO MODERNO CON LOGO
+// ==================================================
+function doGet() {
+  return HtmlService.createHtmlOutput(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+      <title>Consulta de Puntos</title>
+      <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+          font-family: 'Segoe UI', system-ui, sans-serif;
+          background: linear-gradient(135deg, #667eea, #764ba2);
+          min-height: 100vh;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          padding: 20px;
         }
-    };
-</script>
-</body>
-</html>
+        .card {
+          background: white;
+          border-radius: 40px;
+          box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+          width: 100%;
+          max-width: 750px;
+          overflow: hidden;
+          transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .card:hover {
+          transform: translateY(-5px);
+          box-shadow: 0 30px 50px rgba(0,0,0,0.25);
+        }
+        .card-header {
+          background: linear-gradient(90deg, #1e3c72, #2a5298);
+          padding: 24px;
+          text-align: center;
+          color: white;
+        }
+        .logo {
+          width: 120px;
+          margin-bottom: 12px;
+        }
+        .card-header h1 { font-size: 1.8rem; font-weight: 600; }
+        .card-header p { font-size: 1rem; margin-top: 8px; opacity: 0.9; }
+        .card-content {
+          padding: 28px;
+        }
+        input, button {
+          width: 100%;
+          padding: 16px 20px;
+          font-size: 1.2rem;
+          border-radius: 60px;
+          border: 2px solid #e2e8f0;
+          margin-bottom: 16px;
+          outline: none;
+          transition: all 0.2s;
+        }
+        input:focus {
+          border-color: #3b82f6;
+          box-shadow: 0 0 0 3px rgba(59,130,246,0.2);
+        }
+        button {
+          background: #1e3c72;
+          color: white;
+          font-weight: bold;
+          border: none;
+          cursor: pointer;
+        }
+        button:hover {
+          background: #2a5298;
+          transform: scale(1.01);
+        }
+        .resultado {
+          margin-top: 20px;
+        }
+        .puntos {
+          background: #e0f2fe;
+          border-radius: 50px;
+          text-align: center;
+          padding: 16px;
+          margin: 20px 0;
+        }
+        .puntos span {
+          font-size: 2.5rem;
+          font-weight: bold;
+          color: #0369a1;
+        }
+        .premio-item {
+          background: #f8fafc;
+          border-radius: 50px;
+          padding: 10px 18px;
+          margin: 10px 0;
+        }
+        .error {
+          color: #c0392b;
+          background: #fce4e4;
+          padding: 12px;
+          border-radius: 30px;
+          text-align: center;
+        }
+        footer {
+          text-align: center;
+          font-size: 0.75rem;
+          color: #64748b;
+          margin-top: 30px;
+          border-top: 1px solid #e2e8f0;
+          padding-top: 20px;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="card">
+        <div class="card-header">
+          <img class="logo" src="https://i.imgur.com/r45IDW7.png" alt="Logo Escuela">
+          <h1>🎓 Consulta de Puntos</h1>
+          <p>Ingresa tu RUN (solo números)</p>
+        </div>
+        <div class="card-content">
+          <input type="text" id="rut" placeholder="Ej: 12345678" autocomplete="off" inputmode="numeric">
+          <button id="btnConsultar">Consultar</button>
+          <div id="resultado"></div>
+          <footer>Datos actualizados al instante</footer>
+        </div>
+      </div>
+      <script>
+        function mostrarError(mensaje) {
+          document.getElementById("resultado").innerHTML = '<div class="error">❌ ' + mensaje + '</div>';
+        }
+        document.getElementById("btnConsultar").addEventListener("click", function() {
+          var rut = document.getElementById("rut").value.trim().replace(/\\D/g, "");
+          if (!rut) { alert("Ingresa un RUN válido"); return; }
+          var div = document.getElementById("resultado");
+          div.innerHTML = "<div style='text-align:center;'>⏳ Consultando...</div>";
+          google.script.run
+            .withSuccessHandler(function(data) {
+              if (data.status !== "ok") {
+                mostrarError(data.message || "Error inesperado");
+                return;
+              }
+              var html = '<div><strong>👤 ' + data.nombre + '</strong><br>📚 ' + data.curso + '</div>';
+              html += '<div class="puntos"><span>🏆 ' + data.puntos + ' PUNTOS</span></div>';
+              html += '<h3>🎁 Premios que puedes canjear ahora:</h3>';
+              if (data.premios_disponibles && data.premios_disponibles.length) {
+                for (var i = 0; i < data.premios_disponibles.length; i++) {
+                  html += '<div class="premio-item">✓ ' + data.premios_disponibles[i] + '</div>';
+                }
+              } else {
+                html += '<div class="premio-item">✗ Ninguno por ahora</div>';
+              }
+              if (data.proximo_premio) {
+                html += '<h4>🎯 Próximo premio:</h4>';
+                html += '<div class="premio-item"><strong>' + data.proximo_premio + '</strong> (faltan ' + data.puntos_faltantes + ' pts)</div>';
+                html += '<p>⏳ Sigue acumulando puntos</p>';
+              } else {
+                html += '<p style="color:green;">🎉 ¡FELICITACIONES! Ya puedes canjear todos los premios</p>';
+              }
+              if (data.todos_los_premios && data.todos_los_premios.length) {
+                html += '<hr><h4>🏅 Todos los premios a los que puedes aspirar:</h4>';
+                for (var j = 0; j < data.todos_los_premios.length; j++) {
+                  html += '<div class="premio-item">• ' + data.todos_los_premios[j].nombre + ' → ' + data.todos_los_premios[j].costo + ' pts</div>';
+                }
+              }
+              div.innerHTML = html;
+            })
+            .withFailureHandler(function(err) {
+              mostrarError("Error de conexión: " + err.message);
+            })
+            .consultarPadre({rut: rut});
+        });
+      </script>
+    </body>
+    </html>
+  `).setTitle("Consulta de Puntos");
+}
+
+// ==================================================
+// FUNCIÓN SERVIDORA PARA LA WEB (usa la lógica completa)
+// ==================================================
+function consultarPadre(data) {
+  const resultado = consultarAlumno(data);
+  const respuestaJson = JSON.parse(resultado.getContent());
+  return respuestaJson;
+}
+
+// ==================================================
+// ENDPOINT PARA PYTHON (POST)
+// ==================================================
+function doPost(e) {
+  try {
+    const data = JSON.parse(e.postData.contents);
+    const comando = data.comando;
+    if (comando === "sumar") return sumarPuntos(data);
+    if (comando === "consultar") return consultarAlumno(data);
+    if (comando === "canjear") return canjearPremio(data);
+    if (comando === "listar_canjes") return listarCanjes();
+    // COMANDOS PARA GESTIÓN DE ALUMNOS
+    if (comando === "listar_alumnos") return listarAlumnos();
+    if (comando === "agregar_alumno") return agregarAlumno(data);
+    if (comando === "editar_alumno") return editarAlumno(data);
+    if (comando === "eliminar_alumno") return eliminarAlumno(data);
+    // NUEVOS COMANDOS PARA GESTIÓN DE PREMIOS
+    if (comando === "listar_premios") return listarPremios();
+    if (comando === "agregar_premio") return agregarPremio(data);
+    if (comando === "editar_premio") return editarPremio(data);
+    if (comando === "eliminar_premio") return eliminarPremio(data);
+    return respuesta(false, "Comando desconocido");
+  } catch (error) {
+    return respuesta(false, error.toString());
+  }
+}
+
+// ==================================================
+// FUNCIONES PARA PYTHON
+// ==================================================
+function sumarPuntos(data) {
+  const rut = data.rut.toString().replace(/\D/g, "");
+  const puntosSumar = Number(data.puntos) || 50;
+  const ss = SpreadsheetApp.getActive();
+  const hoja = ss.getSheetByName(HOJA_DATOS);
+  const filas = hoja.getDataRange().getValues();
+  for (let i = 1; i < filas.length; i++) {
+    let rutTabla = filas[i][1].toString().replace(/\D/g, "");
+    if (rutTabla === rut) {
+      let puntosActual = Number(filas[i][5]) || 0;
+      let nuevosPuntos = puntosActual + puntosSumar;
+      hoja.getRange(i+1, 6).setValue(nuevosPuntos);
+      let nombre = `${filas[i][2]} ${filas[i][3]} ${filas[i][4]}`.trim();
+      return respuesta(true, "Puntos sumados", { nombre: nombre, puntos: nuevosPuntos });
+    }
+  }
+  return respuesta(false, "RUT no encontrado");
+}
+
+function consultarAlumno(data) {
+  const rut = data.rut.toString().replace(/\D/g, "");
+  const ss = SpreadsheetApp.getActive();
+  const hojaDatos = ss.getSheetByName(HOJA_DATOS);
+  const filas = hojaDatos.getDataRange().getValues();
+  for (let i = 1; i < filas.length; i++) {
+    let rutTabla = filas[i][1].toString().replace(/\D/g, "");
+    if (rutTabla === rut) {
+      let nombre = `${filas[i][2]} ${filas[i][3]} ${filas[i][4]}`.trim();
+      let curso = filas[i][0];
+      let puntos = Number(filas[i][5]) || 0;
+      const premios = obtenerPremiosCompletos(puntos);
+      return respuesta(true, "Consulta exitosa", {
+        nombre: nombre,
+        curso: curso,
+        puntos: puntos,
+        premios_disponibles: premios.disponibles,
+        proximo_premio: premios.proximo,
+        puntos_faltantes: premios.faltantes,
+        todos_los_premios: premios.todos
+      });
+    }
+  }
+  return respuesta(false, "RUT no encontrado");
+}
+
+function obtenerPremiosCompletos(puntos) {
+  const ss = SpreadsheetApp.getActive();
+  const hojaPremios = ss.getSheetByName(HOJA_PREMIOS);
+  if (!hojaPremios) return { disponibles: [], proximo: null, faltantes: null, todos: [] };
+  const premiosData = hojaPremios.getDataRange().getValues();
+  let disponibles = [];
+  let todos = [];
+  let proximoCosto = null;
+  let proximoNombre = null;
+  for (let i = 1; i < premiosData.length; i++) {
+    let costo = Number(premiosData[i][0]);
+    let nombre = premiosData[i][1];
+    if (isNaN(costo) || !nombre) continue;
+    todos.push({ costo: costo, nombre: nombre });
+    if (puntos >= costo) {
+      disponibles.push(nombre);
+    } else {
+      if (proximoCosto === null || costo < proximoCosto) {
+        proximoCosto = costo;
+        proximoNombre = nombre;
+      }
+    }
+  }
+  todos.sort((a,b) => a.costo - b.costo);
+  let faltantes = proximoCosto ? proximoCosto - puntos : null;
+  return { disponibles: disponibles, proximo: proximoNombre, faltantes: faltantes, todos: todos };
+}
+
+function canjearPremio(data) {
+  const rut = data.rut.toString().replace(/\D/g, "");
+  const premioNombre = data.premio;
+  const ss = SpreadsheetApp.getActive();
+  const hojaDatos = ss.getSheetByName(HOJA_DATOS);
+  const hojaPremios = ss.getSheetByName(HOJA_PREMIOS);
+  const hojaCanjes = ss.getSheetByName(HOJA_CANJES);
+  const premiosData = hojaPremios.getDataRange().getValues();
+  let costo = null;
+  for (let i = 1; i < premiosData.length; i++) {
+    if (premiosData[i][1] === premioNombre) {
+      costo = Number(premiosData[i][0]);
+      break;
+    }
+  }
+  if (!costo) return respuesta(false, "Premio no válido");
+  const filas = hojaDatos.getDataRange().getValues();
+  for (let i = 1; i < filas.length; i++) {
+    let rutTabla = filas[i][1].toString().replace(/\D/g, "");
+    if (rutTabla === rut) {
+      let puntosActual = Number(filas[i][5]) || 0;
+      if (puntosActual >= costo) {
+        let nuevosPuntos = puntosActual - costo;
+        hojaDatos.getRange(i+1, 6).setValue(nuevosPuntos);
+        let nombre = `${filas[i][2]} ${filas[i][3]} ${filas[i][4]}`.trim();
+        let curso = filas[i][0];
+        let fecha = new Date();
+        hojaCanjes.appendRow([fecha, rut, nombre, curso, premioNombre, costo]);
+        return respuesta(true, "Canje exitoso", { 
+          nombre: nombre, 
+          puntos_restantes: nuevosPuntos,
+          premio: premioNombre,
+          costo: costo
+        });
+      } else {
+        return respuesta(false, "Puntos insuficientes", { necesitas: costo, tienes: puntosActual });
+      }
+    }
+  }
+  return respuesta(false, "RUT no encontrado");
+}
+
+// ==================================================
+// FUNCIÓN PARA LISTAR CANJES (HISTORIAL)
+// ==================================================
+function listarCanjes() {
+  const ss = SpreadsheetApp.getActive();
+  const hojaCanjes = ss.getSheetByName(HOJA_CANJES);
+  if (!hojaCanjes) return respuesta(false, "Hoja CANJES no encontrada");
+
+  const datos = hojaCanjes.getDataRange().getValues();
+  const canjes = [];
+  for (let i = 1; i < datos.length; i++) {
+    const fila = datos[i];
+    if (!fila[0]) continue;
+    let fecha = fila[0];
+    if (fecha instanceof Date) {
+      fecha = Utilities.formatDate(fecha, Session.getScriptTimeZone(), "dd/MM/yyyy HH:mm:ss");
+    }
+    canjes.push({
+      fecha: fecha,
+      rut: fila[1]?.toString() || "",
+      nombre: fila[2]?.toString() || "",
+      curso: fila[3]?.toString() || "",
+      premio: fila[4]?.toString() || "",
+      puntos: fila[5]?.toString() || ""
+    });
+  }
+  canjes.sort((a, b) => b.fecha.localeCompare(a.fecha));
+  return respuesta(true, "Lista de canjes", { canjes: canjes });
+}
+
+// ==================================================
+// FUNCIONES PARA GESTIÓN DE ALUMNOS (CRUD)
+// ==================================================
+function listarAlumnos() {
+  const ss = SpreadsheetApp.getActive();
+  const hoja = ss.getSheetByName(HOJA_DATOS);
+  if (!hoja) return respuesta(false, "Hoja DATOS no encontrada");
+  const datos = hoja.getDataRange().getValues();
+  const alumnos = [];
+  for (let i = 1; i < datos.length; i++) {
+    const fila = datos[i];
+    alumnos.push({
+      curso: fila[0]?.toString() || "",
+      rut: fila[1]?.toString() || "",
+      nombres: fila[2]?.toString() || "",
+      apellidoPaterno: fila[3]?.toString() || "",
+      apellidoMaterno: fila[4]?.toString() || "",
+      puntos: fila[5]?.toString() || "0"
+    });
+  }
+  return respuesta(true, "Lista de alumnos", { alumnos: alumnos });
+}
+
+function agregarAlumno(data) {
+  const { curso, rut, nombres, apellidoPaterno, apellidoMaterno } = data;
+  if (!rut || !nombres || !apellidoPaterno) {
+    return respuesta(false, "Faltan datos obligatorios (RUT, Nombres, Apellido Paterno)");
+  }
+  const rutLimpio = rut.toString().replace(/\D/g, "");
+  if (rutLimpio.length < 6) return respuesta(false, "RUT inválido (muy corto)");
+
+  const ss = SpreadsheetApp.getActive();
+  const hoja = ss.getSheetByName(HOJA_DATOS);
+  const filas = hoja.getDataRange().getValues();
+  for (let i = 1; i < filas.length; i++) {
+    let rutTabla = filas[i][1].toString().replace(/\D/g, "");
+    if (rutTabla === rutLimpio) {
+      return respuesta(false, "El RUT ya existe");
+    }
+  }
+  hoja.appendRow([curso, rutLimpio, nombres, apellidoPaterno, apellidoMaterno || "", 0]);
+  return respuesta(true, "Alumno agregado exitosamente");
+}
+
+function editarAlumno(data) {
+  const { rutOriginal, curso, rut, nombres, apellidoPaterno, apellidoMaterno } = data;
+  if (!rutOriginal) return respuesta(false, "RUT original no proporcionado");
+  const rutOriginalLimpio = rutOriginal.toString().replace(/\D/g, "");
+  const rutNuevoLimpio = rut.toString().replace(/\D/g, "");
+  
+  const ss = SpreadsheetApp.getActive();
+  const hoja = ss.getSheetByName(HOJA_DATOS);
+  const filas = hoja.getDataRange().getValues();
+  let filaIndex = -1;
+  for (let i = 1; i < filas.length; i++) {
+    let rutTabla = filas[i][1].toString().replace(/\D/g, "");
+    if (rutTabla === rutOriginalLimpio) {
+      filaIndex = i + 1;
+      break;
+    }
+  }
+  if (filaIndex === -1) return respuesta(false, "Alumno no encontrado");
+  
+  if (rutOriginalLimpio !== rutNuevoLimpio) {
+    for (let i = 1; i < filas.length; i++) {
+      let rutTabla = filas[i][1].toString().replace(/\D/g, "");
+      if (rutTabla === rutNuevoLimpio && (i+1) !== filaIndex) {
+        return respuesta(false, "El nuevo RUT ya existe en otro alumno");
+      }
+    }
+  }
+  
+  hoja.getRange(filaIndex, 1).setValue(curso);
+  hoja.getRange(filaIndex, 2).setValue(rutNuevoLimpio);
+  hoja.getRange(filaIndex, 3).setValue(nombres);
+  hoja.getRange(filaIndex, 4).setValue(apellidoPaterno);
+  hoja.getRange(filaIndex, 5).setValue(apellidoMaterno || "");
+  return respuesta(true, "Alumno actualizado exitosamente");
+}
+
+function eliminarAlumno(data) {
+  const { rut } = data;
+  if (!rut) return respuesta(false, "RUT no proporcionado");
+  const rutLimpio = rut.toString().replace(/\D/g, "");
+  const ss = SpreadsheetApp.getActive();
+  const hoja = ss.getSheetByName(HOJA_DATOS);
+  const filas = hoja.getDataRange().getValues();
+  let filaIndex = -1;
+  for (let i = 1; i < filas.length; i++) {
+    let rutTabla = filas[i][1].toString().replace(/\D/g, "");
+    if (rutTabla === rutLimpio) {
+      filaIndex = i + 1;
+      break;
+    }
+  }
+  if (filaIndex === -1) return respuesta(false, "Alumno no encontrado");
+  hoja.deleteRow(filaIndex);
+  return respuesta(true, "Alumno eliminado exitosamente");
+}
+
+// ==================================================
+// NUEVAS FUNCIONES PARA GESTIÓN DE PREMIOS (CRUD)
+// ==================================================
+function listarPremios() {
+  const ss = SpreadsheetApp.getActive();
+  const hoja = ss.getSheetByName(HOJA_PREMIOS);
+  if (!hoja) return respuesta(false, "Hoja PREMIOS no encontrada");
+  const datos = hoja.getDataRange().getValues();
+  const premios = [];
+  for (let i = 1; i < datos.length; i++) {
+    const fila = datos[i];
+    if (!fila[0] && !fila[1]) continue;
+    premios.push({
+      puntos: fila[0]?.toString() || "",
+      nombre: fila[1]?.toString() || ""
+    });
+  }
+  return respuesta(true, "Lista de premios", { premios: premios });
+}
+
+function agregarPremio(data) {
+  const { puntos, nombre } = data;
+  if (!puntos || !nombre) return respuesta(false, "Faltan datos (puntos y nombre)");
+  const puntosNum = Number(puntos);
+  if (isNaN(puntosNum) || puntosNum <= 0) return respuesta(false, "Puntos inválidos");
+  const ss = SpreadsheetApp.getActive();
+  const hoja = ss.getSheetByName(HOJA_PREMIOS);
+  const datos = hoja.getDataRange().getValues();
+  // Verificar duplicado por nombre (insensible a mayúsculas/minúsculas)
+  for (let i = 1; i < datos.length; i++) {
+    if (datos[i][1]?.toString().toLowerCase() === nombre.toString().toLowerCase()) {
+      return respuesta(false, "Ya existe un premio con ese nombre");
+    }
+  }
+  hoja.appendRow([puntosNum, nombre]);
+  return respuesta(true, "Premio agregado exitosamente");
+}
+
+function editarPremio(data) {
+  const { nombreOriginal, puntos, nombre } = data;
+  if (!nombreOriginal || !puntos || !nombre) return respuesta(false, "Faltan datos");
+  const puntosNum = Number(puntos);
+  if (isNaN(puntosNum) || puntosNum <= 0) return respuesta(false, "Puntos inválidos");
+  const ss = SpreadsheetApp.getActive();
+  const hoja = ss.getSheetByName(HOJA_PREMIOS);
+  const datos = hoja.getDataRange().getValues();
+  let filaIndex = -1;
+  for (let i = 1; i < datos.length; i++) {
+    if (datos[i][1]?.toString() === nombreOriginal) {
+      filaIndex = i + 1;
+      break;
+    }
+  }
+  if (filaIndex === -1) return respuesta(false, "Premio no encontrado");
+  // Si cambia el nombre, verificar que no exista otro con el nuevo nombre
+  if (nombreOriginal !== nombre) {
+    for (let i = 1; i < datos.length; i++) {
+      if (datos[i][1]?.toString() === nombre && (i+1) !== filaIndex) {
+        return respuesta(false, "Ya existe otro premio con ese nombre");
+      }
+    }
+  }
+  hoja.getRange(filaIndex, 1).setValue(puntosNum);
+  hoja.getRange(filaIndex, 2).setValue(nombre);
+  return respuesta(true, "Premio actualizado exitosamente");
+}
+
+function eliminarPremio(data) {
+  const { nombre } = data;
+  if (!nombre) return respuesta(false, "Nombre del premio no proporcionado");
+  const ss = SpreadsheetApp.getActive();
+  const hoja = ss.getSheetByName(HOJA_PREMIOS);
+  const datos = hoja.getDataRange().getValues();
+  let filaIndex = -1;
+  for (let i = 1; i < datos.length; i++) {
+    if (datos[i][1]?.toString() === nombre) {
+      filaIndex = i + 1;
+      break;
+    }
+  }
+  if (filaIndex === -1) return respuesta(false, "Premio no encontrado");
+  hoja.deleteRow(filaIndex);
+  return respuesta(true, "Premio eliminado exitosamente");
+}
+
+function respuesta(ok, mensaje, data = {}) {
+  return ContentService.createTextOutput(JSON.stringify({
+    status: ok ? "ok" : "error",
+    message: mensaje,
+    ...data
+  })).setMimeType(ContentService.MimeType.JSON);
+}
